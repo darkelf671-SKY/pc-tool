@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>서울재활병원 PC 문제해결 도우미</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #65BB00; --brand-dark: #58A201; --brand-light: #E8F5D6; --brand-bg: #F4FAE8;
+    --navy: #1E2C67; --navy-light: #2A3A7C;
+    --success: #65BB00; --success-light: #E8F5D6;
+    --warning: #F5A623; --warning-light: #FFF5E0;
+    --danger: #E40214; --danger-light: #FDE8EA;
+    --blue: #008FC3; --blue-light: #E0F4FB;
+    --gray-50: #FAFBFC; --gray-100: #F6F6F6; --gray-200: #EEEEEE;
+    --gray-300: #DDD; --gray-400: #AAA; --gray-500: #888;
+    --gray-600: #666; --gray-700: #444; --gray-800: #333; --gray-900: #111;
+    --radius: 12px; --radius-sm: 8px; --radius-lg: 20px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 15px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+    --shadow-hover: 3.5px 3.5px 5px rgba(0,0,0,0.12);
+    --transition: all 0.25s ease;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Sans KR','맑은 고딕',sans-serif; background:white; color:var(--gray-800); line-height:1.6; letter-spacing:-0.3px; -webkit-font-smoothing:antialiased; overflow:hidden; height:100vh; }
+  .app { width:100%; height:100vh; background:white; position:relative; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* ===== HEADER ===== */
+  .header { background:white; padding:0; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
+  .header-top { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; }
+  .header-left { display:flex; align-items:center; gap:12px; }
+  .header-logo-img { height:28px; }
+  .header-divider { width:1px; height:24px; background:var(--gray-300); }
+  .header-title-area {}
+  .header-hospital { font-size:11px; font-weight:600; color:var(--brand-dark); letter-spacing:-0.2px; margin-bottom:1px; }
+  .header-title { font-size:15px; font-weight:700; color:var(--gray-900); letter-spacing:-0.5px; display:flex; align-items:center; gap:6px; }
+  .header-ver { font-size:10px; color:var(--gray-500); font-weight:400; letter-spacing:0; background:var(--gray-100); padding:1px 6px; border-radius:4px; }
+
+  /* ===== REMOTE BANNER ===== */
+  .remote-banner { background:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
+  .remote-banner-left { display:flex; align-items:center; gap:8px; }
+  .remote-dot { width:8px; height:8px; border-radius:50%; background:var(--brand); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .remote-banner-text { font-size:13px; color:var(--gray-600); }
+  .remote-banner-text strong { color:var(--gray-800); font-weight:600; }
+  .remote-btn { background:#3B82F6; color:white; border:none; padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:var(--transition); display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .remote-btn:hover { background:#2563EB; }
+  .remote-btn .rb-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(255,255,255,0.25); border-radius:50%; font-size:11px; flex-shrink:0; }
+
+  /* ===== NAV TABS ===== */
+  .nav-tabs { display:flex; background:white; border-bottom:1px solid var(--gray-200); padding:0; flex-shrink:0; }
+  .nav-tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 0 10px; border:none; background:none; cursor:pointer; font-size:11px; font-weight:500; color:var(--gray-500); border-bottom:2px solid transparent; font-family:inherit; transition:var(--transition); }
+  .nav-tab:hover { color:var(--brand); background:var(--brand-bg); }
+  .nav-tab.active { color:var(--brand); border-bottom-color:var(--brand); font-weight:600; }
+  .nav-tab .ti { font-size:20px; line-height:1; }
+
+  /* ===== SCREEN CONTAINER ===== */
+  .screen-container { flex:1; overflow-y:auto; overflow-x:hidden; }
+
+  /* ===== SCREENS ===== */
+  .screen { display:none; padding:20px; }
+  .screen.active { display:block; }
+
+  /* ===== HOME ===== */
+  .home-greeting { padding:24px 0 8px; }
+  .home-greeting h2 { font-size:22px; font-weight:700; color:var(--gray-900); letter-spacing:-0.8px; line-height:1.3; }
+  .home-greeting h2 span { color:var(--brand); }
+  .home-greeting p { font-size:13px; color:var(--gray-500); margin-top:6px; font-weight:400; }
+  .symptom-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+  .symptom-card { background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:20px 16px; cursor:pointer; text-align:center; transition:var(--transition); position:relative; }
+  .symptom-card:hover { border-color:var(--brand); box-shadow:var(--shadow-hover); transform:translateY(-2px); }
+  .symptom-card .ci { font-size:36px; margin-bottom:10px; display:block; }
+  .symptom-card .ct { font-size:15px; font-weight:700; color:var(--gray-900); margin-bottom:4px; letter-spacing:-0.5px; }
+  .symptom-card .cd { font-size:11px; color:var(--gray-500); line-height:1.5; }
+  .symptom-card .cc { display:inline-block; background:var(--brand-bg); color:var(--brand-dark); font-size:10px; font-weight:600; padding:3px 10px; border-radius:10px; margin-top:10px; }
+  .symptom-card.highlight { border-color:var(--brand); border-width:2px; }
+  .symptom-card .new-badge { position:absolute; top:10px; right:10px; background:var(--brand); color:white; font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; letter-spacing:0.5px; }
+
+  /* ===== DETAIL ===== */
+  .detail-back { display:inline-flex; align-items:center; gap:4px; color:var(--gray-500); font-size:13px; cursor:pointer; margin-bottom:16px; border:none; background:none; font-family:inherit; font-weight:500; transition:var(--transition); }
+  .detail-back:hover { color:var(--brand); }
+  .detail-header { display:flex; align-items:center; gap:14px; margin-bottom:8px; padding-bottom:16px; border-bottom:1px solid var(--gray-200); }
+  .detail-header .dhi { font-size:32px; }
+  .detail-header .dht { font-size:20px; font-weight:700; color:var(--gray-900); letter-spacing:-0.5px; }
+  .detail-header .dhs { font-size:12px; color:var(--gray-500); margin-top:2px; font-weight:400; }
+  .section-divider { height:1px; background:var(--gray-200); margin:4px 0 16px; }
+  .solution-card { background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:18px; margin-bottom:10px; transition:var(--transition); }
+  .solution-card:hover { border-color:var(--brand); box-shadow:var(--shadow-md); }
+  .solution-top { display:flex; align-items:flex-start; gap:14px; }
+  .solution-icon { width:44px; height:44px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .solution-icon.green { background:var(--brand-light); }
+  .solution-icon.blue { background:var(--blue-light); }
+  .solution-icon.orange { background:var(--warning-light); }
+  .solution-icon.red { background:var(--danger-light); }
+  .solution-icon.gray { background:var(--gray-100); }
+  .si-symptom { font-size:14px; font-weight:600; color:var(--gray-900); letter-spacing:-0.3px; margin-bottom:4px; }
+  .si-explain { font-size:12px; color:var(--gray-600); line-height:1.6; margin-bottom:8px; }
+  .si-explain strong { color:var(--brand-dark); font-weight:600; }
+  .solution-tags { display:flex; gap:6px; flex-wrap:wrap; }
+  .tag { font-size:10px; padding:3px 8px; border-radius:4px; font-weight:600; letter-spacing:0; }
+  .tag.safe { background:var(--brand-light); color:var(--brand-dark); }
+  .tag.reboot { background:var(--warning-light); color:#B45309; }
+  .tag.slow { background:#F3E8FF; color:#7C3AED; }
+  .tag.instant { background:var(--blue-light); color:var(--blue); }
+  .tag.future { background:var(--gray-100); color:var(--gray-500); }
+  .run-btn-area { display:flex; justify-content:flex-end; margin-top:12px; }
+  .run-btn { background:var(--brand); color:white; border:none; padding:8px 20px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:var(--transition); display:flex; align-items:center; gap:6px; }
+  .run-btn:hover { background:var(--brand-dark); box-shadow:0 2px 8px rgba(101,187,0,0.3); }
+  .tip-box { background:var(--brand-bg); border-left:3px solid var(--brand); border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:14px 16px; margin-top:16px; font-size:12px; color:var(--gray-700); line-height:1.6; }
+  .tip-box strong { color:var(--brand-dark); }
+
+  /* ===== CONFIRM DIALOG ===== */
+  .overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .overlay.show { display:flex; }
+  .confirm-dialog { background:white; border-radius:var(--radius-lg); padding:28px; max-width:400px; width:90%; box-shadow:var(--shadow-lg); }
+  .cd-icon { font-size:44px; text-align:center; margin-bottom:12px; }
+  .cd-title { font-size:17px; font-weight:700; text-align:center; margin-bottom:6px; color:var(--gray-900); }
+  .cd-desc { font-size:13px; color:var(--gray-500); text-align:center; margin-bottom:20px; line-height:1.6; }
+  .cd-what { background:var(--gray-50); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px; border:1px solid var(--gray-200); }
+  .cd-what-title { font-size:11px; font-weight:700; color:var(--gray-500); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+  .cd-what-list { font-size:13px; color:var(--gray-700); }
+  .cd-what-list div { padding:4px 0; display:flex; align-items:center; gap:8px; }
+  .cd-warn { background:var(--warning-light); border-radius:var(--radius-sm); padding:12px; margin-bottom:16px; font-size:12px; color:#92400E; border:1px solid #F5D89A; }
+  .cd-btns { display:flex; gap:10px; }
+  .cd-btns button { flex:1; padding:12px; border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:var(--transition); }
+  .cd-cancel { background:white; color:var(--gray-700); border:1px solid var(--gray-300); }
+  .cd-cancel:hover { background:var(--gray-100); }
+  .cd-confirm { background:var(--brand); color:white; border:none; }
+  .cd-confirm:hover { background:var(--brand-dark); }
+
+  /* ===== EXECUTING ===== */
+  .exec-container { max-width:400px; margin:0 auto; text-align:center; padding:24px 0; }
+  .exec-icon { font-size:56px; margin-bottom:16px; }
+  .exec-title { font-size:18px; font-weight:700; margin-bottom:6px; color:var(--gray-900); }
+  .exec-desc { font-size:13px; color:var(--gray-500); margin-bottom:24px; }
+  .exec-progress { width:100%; height:4px; background:var(--gray-200); border-radius:2px; overflow:hidden; margin-bottom:20px; }
+  .exec-progress-bar { height:100%; background:linear-gradient(90deg,var(--brand),var(--brand-dark)); border-radius:2px; transition:width 0.5s; width:0%; }
+  .exec-steps { text-align:left; background:var(--gray-50); border-radius:var(--radius); padding:16px 20px; margin-bottom:16px; border:1px solid var(--gray-200); }
+  .exec-step { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13px; color:var(--gray-400); border-bottom:1px solid var(--gray-100); }
+  .exec-step:last-child { border-bottom:none; }
+  .exec-step.done { color:var(--brand-dark); }
+  .exec-step.active { color:var(--gray-800); font-weight:600; }
+  .exec-step .si { width:22px; text-align:center; font-size:14px; }
+  .exec-log { text-align:left; background:var(--gray-900); color:#A5F3A3; border-radius:var(--radius-sm); padding:14px 16px; font-family:'D2Coding','Consolas',monospace; font-size:11px; line-height:1.8; max-height:120px; overflow-y:auto; }
+  .log-time { color:#64748B; }
+  .log-ok { color:#4ADE80; }
+
+  /* ===== RESULT ===== */
+  .result-container { max-width:400px; margin:0 auto; text-align:center; padding:40px 0; }
+  .result-icon { font-size:64px; margin-bottom:16px; }
+  .result-title { font-size:22px; font-weight:700; margin-bottom:8px; }
+  .result-title.ok { color:var(--brand-dark); }
+  .result-title.fail { color:var(--danger); }
+  .result-desc { font-size:14px; color:var(--gray-500); margin-bottom:24px; line-height:1.6; }
+  .result-tip { background:var(--brand-bg); border-radius:var(--radius); padding:16px 20px; font-size:13px; color:var(--gray-700); margin-bottom:24px; text-align:left; line-height:1.6; }
+  .result-tip strong { color:var(--brand-dark); }
+  .result-tip.fail-tip { background:var(--danger-light); }
+  .exec-btns { display:flex; gap:10px; justify-content:center; }
+  .btn-secondary { background:white; color:var(--gray-700); border:1px solid var(--gray-300); padding:10px 24px; border-radius:20px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; transition:var(--transition); }
+  .btn-secondary:hover { border-color:var(--brand); color:var(--brand); }
+  .btn-primary { background:var(--brand); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:var(--transition); }
+  .btn-primary:hover { background:var(--brand-dark); }
+  .btn-danger { background:var(--danger); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:var(--transition); }
+  .btn-danger:hover { background:#C20111; }
+
+  /* ===== ALL TOOLS ===== */
+  .all-tools-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .mini-card { background:white; border:1px solid var(--gray-200); border-radius:var(--radius-sm); padding:14px 8px; text-align:center; cursor:pointer; transition:var(--transition); }
+  .mini-card:hover { border-color:var(--brand); background:var(--brand-bg); }
+  .mini-card.disabled { opacity:0.5; cursor:default; }
+  .mini-card.disabled:hover { border-color:var(--gray-200); background:white; }
+  .mini-card .mi { font-size:24px; margin-bottom:6px; display:block; }
+  .mini-card .mn { font-size:11px; font-weight:600; color:var(--gray-800); }
+  .mini-card .md { font-size:10px; color:var(--gray-500); margin-top:2px; }
+  .section-label { font-size:12px; font-weight:700; color:var(--gray-500); margin:20px 0 10px; padding-left:12px; letter-spacing:0.5px; position:relative; }
+  .section-label::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:14px; background:var(--brand); border-radius:2px; }
+  .section-label:first-child { margin-top:0; }
+
+  /* ===== HISTORY ===== */
+  .history-item { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--gray-100); transition:var(--transition); }
+  .history-item:last-child { border-bottom:none; }
+  .history-item:hover { background:var(--gray-50); }
+  .history-left { display:flex; align-items:center; gap:12px; }
+  .history-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .history-icon.ok { background:var(--brand-light); }
+  .history-icon.fail { background:var(--danger-light); }
+  .history-name { font-size:14px; font-weight:600; color:var(--gray-800); }
+  .history-desc { font-size:11px; color:var(--gray-500); margin-top:2px; }
+  .history-right { text-align:right; }
+  .history-status { font-size:11px; font-weight:600; }
+  .history-status.ok { color:var(--brand-dark); }
+  .history-status.fail { color:var(--danger); }
+  .history-date { font-size:10px; color:var(--gray-400); margin-top:2px; }
+
+  /* ===== GUIDE ===== */
+  .faq-item { padding:16px; border-bottom:1px solid var(--gray-100); }
+  .faq-item:last-child { border-bottom:none; }
+  .faq-q { font-size:13px; font-weight:600; color:var(--gray-800); margin-bottom:6px; display:flex; align-items:flex-start; gap:6px; }
+  .faq-q::before { content:'Q'; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:var(--brand); color:white; font-size:10px; font-weight:700; border-radius:4px; flex-shrink:0; margin-top:1px; }
+  .faq-a { font-size:12px; color:var(--gray-600); line-height:1.6; padding-left:26px; }
+  .faq-a strong { color:var(--brand-dark); }
+  .step-flow { display:flex; gap:8px; margin-bottom:4px; }
+  .step-card { flex:1; background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:16px 12px; text-align:center; position:relative; }
+  .step-num { width:28px; height:28px; background:var(--brand); color:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin-bottom:8px; }
+  .step-title { font-size:13px; font-weight:600; color:var(--gray-800); margin-bottom:4px; }
+  .step-desc { font-size:10px; color:var(--gray-500); line-height:1.5; }
+  .step-arrow { position:absolute; right:-14px; top:50%; transform:translateY(-50%); color:var(--gray-300); font-size:18px; z-index:1; }
+
+  /* ===== FOOTER ===== */
+  .app-footer { background:var(--gray-50); border-top:1px solid var(--gray-200); padding:14px 20px; text-align:center; flex-shrink:0; }
+  .app-footer-author { font-size:12px; color:var(--gray-600); font-weight:500; margin-bottom:2px; }
+  .app-footer-author span { color:var(--brand-dark); font-weight:600; }
+  .app-footer-link { font-size:11px; }
+  .app-footer-link a { color:var(--brand-dark); text-decoration:none; cursor:pointer; font-weight:500; }
+  .app-footer-link a:hover { text-decoration:underline; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state { text-align:center; padding:40px 20px; color:var(--gray-400); }
+  .empty-state .ei { font-size:48px; margin-bottom:12px; display:block; }
+  .empty-state .et { font-size:14px; font-weight:500; }
+
+  /* scrollbar */
+  .screen-container::-webkit-scrollbar { width:6px; }
+  .screen-container::-webkit-scrollbar-track { background:transparent; }
+  .screen-container::-webkit-scrollbar-thumb { background:var(--gray-300); border-radius:3px; }
+  .screen-container::-webkit-scrollbar-thumb:hover { background:var(--gray-400); }
+  .exec-log::-webkit-scrollbar { width:4px; }
+  .exec-log::-webkit-scrollbar-track { background:transparent; }
+  .exec-log::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-left">
+        <span style="font-size:24px;">🏥</span>
+        <div class="header-divider"></div>
+        <div class="header-title-area">
+          <div class="header-hospital" id="hdr-hospital">서울재활병원</div>
+          <div class="header-title">
+            <span id="hdr-title">PC 문제해결 도우미</span>
+            <span class="header-ver" id="hdr-ver">v1.0.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:3px;background:linear-gradient(90deg,var(--brand),var(--brand-dark));"></div>
+  </div>
+
+  <!-- REMOTE BANNER -->
+  <div class="remote-banner">
+    <div class="remote-banner-left">
+      <div class="remote-dot"></div>
+      <div class="remote-banner-text">해결이 어려우시면 <strong>전산팀 원격 지원</strong></div>
+    </div>
+    <button class="remote-btn" onclick="openRemote()"><span class="rb-icon">📞</span> 원격 지원 요청</button>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-home" onclick="go('home')"><span class="ti">🏠</span><span>문제 찾기</span></button>
+    <button class="nav-tab" id="tab-tools" onclick="go('alltools')"><span class="ti">🧰</span><span>전체 도구</span></button>
+    <button class="nav-tab" id="tab-history" onclick="go('history')"><span class="ti">📋</span><span>실행 기록</span></button>
+    <button class="nav-tab" id="tab-guide" onclick="go('guide')"><span class="ti">ℹ️</span><span>사용법</span></button>
+  </div>
+
+  <!-- SCREEN CONTAINER (scrollable) -->
+  <div class="screen-container">
+
+    <!-- HOME -->
+    <div class="screen active" id="s-home">
+      <div class="home-greeting">
+        <h2>어떤 <span>문제</span>가 있으신가요?</h2>
+        <p>증상을 선택하시면 해결 방법을 안내해드립니다</p>
+      </div>
+      <div class="symptom-grid" id="home-grid"></div>
+    </div>
+
+    <!-- DETAIL (dynamic template) -->
+    <div class="screen" id="s-detail">
+      <button class="detail-back" onclick="go('home')">← 뒤로가기</button>
+      <div class="detail-header">
+        <div class="dhi" id="detail-icon"></div>
+        <div class="detail-header-text">
+          <div class="dht" id="detail-title"></div>
+          <div class="dhs" id="detail-subtitle">증상에 맞는 해결 방법을 선택하세요</div>
+        </div>
+      </div>
+      <div id="detail-solutions"></div>
+      <div class="tip-box" id="detail-tip" style="display:none;"></div>
+    </div>
+
+    <!-- ALL TOOLS -->
+    <div class="screen" id="s-alltools">
+      <div id="alltools-content"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="screen" id="s-history">
+      <div id="history-content"></div>
+    </div>
+
+    <!-- GUIDE -->
+    <div class="screen" id="s-guide">
+      <div style="font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:20px;">사용법</div>
+      <div style="background:var(--brand-bg);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:14px;text-align:center;">3단계로 문제를 해결하세요</div>
+        <div class="step-flow">
+          <div class="step-card">
+            <div class="step-num">1</div><div class="step-arrow">→</div>
+            <div class="step-title">증상 선택</div>
+            <div class="step-desc">홈에서 내 상황과<br>비슷한 카테고리 선택</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div><div class="step-arrow">→</div>
+            <div class="step-title">해결 방법 선택</div>
+            <div class="step-desc">세부 증상 중<br>가장 가까운 것 선택</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-title">실행</div>
+            <div class="step-desc">확인 후 실행 버튼<br>클릭하면 자동 해결</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:12px;">자주 묻는 질문</div>
+      <div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">
+        <div class="faq-item">
+          <div class="faq-q">실행하면 내 파일이 삭제되나요?</div>
+          <div class="faq-a">아니요. 모든 도구는 시스템 캐시나 임시 파일만 정리합니다. 문서, 사진, 작업 파일은 절대 삭제하지 않습니다.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">재부팅해야 하나요?</div>
+          <div class="faq-a">대부분 재부팅 없이 바로 적용됩니다. 필요한 경우 태그에 <strong>"재부팅 권장"</strong>이라고 표시되어 있습니다.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">실행했는데 안 되면 어떻게 하나요?</div>
+          <div class="faq-a">완료 화면의 안내를 따라해보세요. 그래도 안 되면 상단 <strong>"원격 지원 요청"</strong>을 클릭해 전산팀에 도움을 요청하세요.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">같은 도구를 여러 번 실행해도 되나요?</div>
+          <div class="faq-a">네, 모든 도구는 여러 번 실행해도 안전합니다. 이미 정상인 항목은 건너뛰고 문제가 있는 부분만 처리합니다.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">업데이트는 어떻게 하나요?</div>
+          <div class="faq-a">프로그램 시작 시 자동으로 최신 버전을 확인합니다. 새 버전이 있으면 알림이 뜨고, 클릭하면 자동 업데이트됩니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXEC -->
+    <div class="screen" id="s-exec">
+      <div class="exec-container">
+        <div class="exec-icon">⏳</div>
+        <div class="exec-title" id="exec-title">실행 중...</div>
+        <div class="exec-desc">잠시만 기다려주세요. 자동으로 진행됩니다.</div>
+        <div class="exec-progress"><div class="exec-progress-bar" id="exec-bar"></div></div>
+        <div class="exec-steps" id="exec-steps"></div>
+        <div class="exec-log" id="exec-log"></div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="s-result">
+      <div class="result-container" id="result-content"></div>
+    </div>
+
+  </div><!-- /screen-container -->
+
+  <!-- CONFIRM OVERLAY -->
+  <div class="overlay" id="s-confirm">
+    <div class="confirm-dialog" id="confirm-content"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="app-footer">
+    <div class="app-footer-author" id="footer-author">제작 : 서울재활병원 <span>전산팀 장길섭</span></div>
+    <div class="app-footer-link" id="footer-link"><a onclick="openRemote()">원격 지원</a></div>
+  </div>
+</div>
+
+<script>
+/* ================================================
+   PC 문제해결 도우미 — pywebview 프론트엔드
+   ================================================ */
+
+// -- 상태 --
+let APP = { config: {}, symptomMap: {} };
+let currentCategoryId = null;
+let currentSymptom = null;
+let execSteps = [];
+let execCompletedSteps = 0;
+let tagLabels = {};
+
+// -- 아이콘/색상 매핑 (목업 동일) --
+const ICON_MAP = {
+  printer_stuck:        { icon: '🔄', color: 'green' },
+  site_blocked:         { icon: '🔌', color: 'green' },
+  ssl_warning:          { icon: '🌐', color: 'blue' },
+  connected_but_no:     { icon: '📡', color: 'orange' },
+  slow_boot:            { icon: '🗑️', color: 'green' },
+  taskbar_frozen:       { icon: '📁', color: 'blue' },
+  random_errors:        { icon: '🔧', color: 'orange' },
+  teams_broken:         { icon: '💬', color: 'green' },
+  browser_broken:       { icon: '🌐', color: 'blue' },
+  emr_broken:           { icon: '🏥', color: 'orange' },
+  outlook_store_broken: { icon: '📦', color: 'gray' },
+  ime_spacing:          { icon: '⌨️', color: 'green' },
+  update_fail:          { icon: '🔄', color: 'green' },
+  icon_broken:          { icon: '🖼️', color: 'green' },
+  taskbar_gone:         { icon: '📁', color: 'blue' },
+  ms_account_error:     { icon: '🔑', color: 'green' },
+  ms_login_0x_error:    { icon: '⚠️', color: 'blue' },
+  outlook_other_account:{ icon: '💼', color: 'gray' },
+};
+
+const TAG_CLASS = {
+  no_reboot: 'safe', reboot: 'reboot', slow: 'slow',
+  '3sec': 'instant', '5sec': 'instant', '10sec': 'instant',
+  '15sec': 'instant', '30sec': 'instant', '1min': 'instant',
+  'v1.1': 'future',
+};
+
+// 전체 도구 레이아웃 (목업 동일)
+const ALLTOOLS = [
+  { label: '기본 도구', tools: [
+    { icon:'🖨️', name:'프린터 초기화', desc:'인쇄 대기열 비우기', id:'printer_spooler' },
+    { icon:'🔄', name:'업데이트 캐시', desc:'업데이트 오류 해결', id:'winupdate_cache' },
+    { icon:'🌐', name:'브라우저 초기화', desc:'캐시/쿠키/SSL 정리', id:'browser_reset' },
+    { icon:'🔌', name:'DNS 초기화', desc:'사이트 접속 오류', id:'dns_flush' },
+    { icon:'📡', name:'네트워크 초기화', desc:'인터넷 연결 복구', id:'network_reset' },
+    { icon:'🗑️', name:'임시파일 정리', desc:'디스크 공간 확보', id:'temp_cleanup' },
+  ]},
+  { label: '고급 도구', tools: [
+    { icon:'📁', name:'탐색기 재시작', desc:'작업표시줄 복구', id:'explorer_restart' },
+    { icon:'📦', name:'Store 앱 초기화', desc:'Outlook 등 앱 복구', id:'store_app_reset' },
+    { icon:'🖼️', name:'아이콘 캐시', desc:'깨진 아이콘 복구', id:'icon_cache' },
+    { icon:'🔧', name:'시스템 파일 검사', desc:'SFC + DISM 복구', id:'sfc_scan' },
+    { icon:'🔑', name:'MS 계정 초기화', desc:'이전 계정 정리', id:'ms_account_cleanup' },
+    { icon:'⌨️', name:'입력기 복구', desc:'글자 간격/IME 오류', id:'ime_fix' },
+  ]},
+  { label: 'v1.1 도구', tools: [
+    { icon:'🏥', name:'EMR 재설치', desc:'내 PC만 안 될 때', id:'his_reinstall' },
+    { icon:'💬', name:'Teams 재설치', desc:'완전 삭제 후 재설치', id:'teams_reinstall' },
+    { icon:'📶', name:'WiFi 수리', desc:'끊김/느림 해결', id:'wifi_fix', disabled:true },
+  ]},
+  { label: '지원', tools: [
+    { icon:'📞', name:'원격 지원 요청 (367.co.kr)', desc:'전산팀이 원격으로 도와드립니다', id:'_remote', span:3 },
+  ]},
+];
+
+/* ====== INIT ====== */
+window.addEventListener('pywebviewready', async () => {
+  try {
+    APP.config = await pywebview.api.get_config();
+    APP.symptomMap = await pywebview.api.get_symptom_map();
+    tagLabels = APP.symptomMap.tag_labels || {};
+    renderHeader();
+    renderHomeGrid();
+    renderAllTools();
+    await loadHistory();
+  } catch (e) {
+    console.error('Init error:', e);
+  }
+});
+
+/* ====== HEADER ====== */
+function renderHeader() {
+  const name = APP.config.app_name || '서울재활병원 PC 문제해결 도우미';
+  // 병원명과 앱명 분리 ("서울재활병원 PC 문제해결 도우미" → "서울재활병원" + "PC 문제해결 도우미")
+  const parts = name.match(/^(.+?)\s+(PC.+)$/);
+  if (parts) {
+    document.getElementById('hdr-hospital').textContent = parts[1];
+    document.getElementById('hdr-title').textContent = parts[2];
+  } else {
+    document.getElementById('hdr-title').textContent = name;
+  }
+  document.getElementById('hdr-ver').textContent = 'v' + (APP.config.app_version || '1.0.0');
+  // Footer
+  const author = APP.config.author || '서울재활병원 전산팀 장길섭';
+  const ap = author.match(/^(.+?)\s+(전산팀.+)$/);
+  const fa = document.getElementById('footer-author');
+  if (ap) {
+    fa.innerHTML = '제작 : ' + ap[1] + ' <span>' + ap[2] + '</span>';
+  } else {
+    fa.innerHTML = '제작 : ' + author;
+  }
+}
+
+/* ====== HOME GRID ====== */
+function renderHomeGrid() {
+  const grid = document.getElementById('home-grid');
+  grid.innerHTML = '';
+  const cats = (APP.symptomMap.categories || []).filter(c => c.visible !== false);
+  cats.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  cats.forEach(cat => {
+    const symptoms = cat.symptoms || [];
+    const isNew = cat.id === 'account';
+    const card = document.createElement('div');
+    card.className = 'symptom-card' + (isNew ? ' highlight' : '');
+    card.onclick = () => showDetail(cat.id);
+    card.innerHTML =
+      (isNew ? '<span class="new-badge">NEW</span>' : '') +
+      '<span class="ci">' + cat.icon + '</span>' +
+      '<div class="ct">' + cat.title + '</div>' +
+      '<div class="cd">' + (cat.description || '').replace(/\n/g, '<br>') + '</div>' +
+      '<div class="cc">해결 도구 ' + symptoms.length + '개</div>';
+    grid.appendChild(card);
+  });
+}
+
+/* ====== DETAIL ====== */
+function showDetail(catId) {
+  const cat = (APP.symptomMap.categories || []).find(c => c.id === catId);
+  if (!cat) return;
+  currentCategoryId = catId;
+
+  document.getElementById('detail-icon').textContent = cat.icon;
+  document.getElementById('detail-title').textContent = cat.title;
+  document.getElementById('detail-subtitle').textContent = '증상에 맞는 해결 방법을 선택하세요';
+
+  const box = document.getElementById('detail-solutions');
+  box.innerHTML = '';
+
+  const symptoms = cat.symptoms || [];
+  symptoms.forEach(sym => {
+    const m = ICON_MAP[sym.id] || { icon: '🔧', color: 'green' };
+    const card = document.createElement('div');
+    card.className = 'solution-card';
+
+    let explainHtml = escHtml(sym.explain || '');
+    if (sym.recommended) {
+      const recText = sym.recommended_text !== undefined ? sym.recommended_text : '가장 흔한 원인이에요 — 이것부터 해보세요!';
+      if (recText) explainHtml += '<br><strong>' + escHtml(recText) + '</strong>';
+    }
+
+    let tagsHtml = '';
+    (sym.tags || []).forEach(t => {
+      const cls = TAG_CLASS[t] || '';
+      const label = tagLabels[t] || t;
+      tagsHtml += '<span class="tag ' + cls + '">' + escHtml(label) + '</span>';
+    });
+
+    card.innerHTML =
+      '<div class="solution-top">' +
+        '<div class="solution-icon ' + m.color + '">' + m.icon + '</div>' +
+        '<div style="flex:1">' +
+          '<div class="si-symptom">' + escHtml(sym.title) + '</div>' +
+          '<div class="si-explain">' + explainHtml + '</div>' +
+          '<div class="solution-tags">' + tagsHtml + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="run-btn-area"><button class="run-btn" onclick="event.stopPropagation();onRunClick(\'' + sym.id + '\')">▶ 실행하기</button></div>';
+
+    box.appendChild(card);
+  });
+
+  // Tip
+  const tipEl = document.getElementById('detail-tip');
+  if (cat.tip) {
+    tipEl.innerHTML = cat.tip;
+    tipEl.style.display = 'block';
+  } else {
+    tipEl.style.display = 'none';
+  }
+
+  go('detail');
+}
+
+/* ====== RUN CLICK ====== */
+function onRunClick(symptomId) {
+  const sym = findSymptom(symptomId);
+  if (!sym) return;
+  currentSymptom = sym;
+
+  if (sym.confirm_steps && sym.confirm_steps.length > 0) {
+    showConfirm(sym);
+  } else {
+    startExec(sym);
+  }
+}
+
+function findSymptom(id) {
+  for (const cat of (APP.symptomMap.categories || [])) {
+    for (const sym of (cat.symptoms || [])) {
+      if (sym.id === id) return sym;
+    }
+  }
+  return null;
+}
+
+/* ====== CONFIRM DIALOG ====== */
+function showConfirm(sym) {
+  const m = ICON_MAP[sym.id] || { icon: '🔧' };
+  const nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'];
+
+  let stepsHtml = '';
+  if (sym.confirm_steps) {
+    stepsHtml = '<div class="cd-what"><div class="cd-what-title">진행 단계</div><div class="cd-what-list">';
+    sym.confirm_steps.forEach((s, i) => {
+      stepsHtml += '<div>' + (nums[i] || (i+1)+'.') + ' ' + escHtml(s) + '</div>';
+    });
+    stepsHtml += '</div></div>';
+  }
+
+  let warnHtml = '';
+  if (sym.warning) {
+    warnHtml = '<div class="cd-warn">⚠️ ' + escHtml(sym.warning) + '</div>';
+  }
+
+  document.getElementById('confirm-content').innerHTML =
+    '<div class="cd-icon">' + m.icon + '</div>' +
+    '<div class="cd-title">' + escHtml(sym.title) + '</div>' +
+    '<div class="cd-desc">아래 작업을 자동으로 진행합니다</div>' +
+    stepsHtml + warnHtml +
+    '<div class="cd-btns">' +
+      '<button class="cd-cancel" onclick="closeConfirm()">취소</button>' +
+      '<button class="cd-confirm" onclick="confirmExec()">실행하기</button>' +
+    '</div>';
+
+  document.getElementById('s-confirm').style.display = 'flex';
+}
+
+function closeConfirm() {
+  document.getElementById('s-confirm').style.display = 'none';
+}
+
+function confirmExec() {
+  closeConfirm();
+  if (currentSymptom) startExec(currentSymptom);
+}
+
+/* ====== EXEC ====== */
+async function startExec(sym) {
+  currentSymptom = sym;
+  execCompletedSteps = 0;
+
+  // Get tool info for steps
+  let toolInfo = {};
+  try {
+    toolInfo = await pywebview.api.get_tool_info(sym.tool_id);
+  } catch(e) {}
+  execSteps = toolInfo.steps || [];
+
+  // Title
+  document.getElementById('exec-title').textContent = escText(sym.title) + ' 실행 중...';
+
+  // Progress bar reset
+  document.getElementById('exec-bar').style.width = '0%';
+
+  // Steps
+  const stepsEl = document.getElementById('exec-steps');
+  if (execSteps.length > 0) {
+    stepsEl.style.display = 'block';
+    let html = '';
+    execSteps.forEach((s, i) => {
+      const cls = i === 0 ? 'active' : '';
+      const icon = i === 0 ? '⏳' : '○';
+      html += '<div class="exec-step ' + cls + '" id="estep-' + i + '"><span class="si">' + icon + '</span><span>' + escHtml(s) + '</span></div>';
+    });
+    stepsEl.innerHTML = html;
+  } else {
+    stepsEl.style.display = 'none';
+  }
+
+  // Clear log
+  document.getElementById('exec-log').innerHTML = '';
+
+  go('exec');
+
+  // Start tool execution
+  try {
+    await pywebview.api.execute_tool(JSON.stringify(sym));
+  } catch(e) {
+    onToolComplete(false, 0, false);
+  }
+}
+
+/* ====== TOOL CALLBACKS (called from Python) ====== */
+function onToolLog(message, stepIndex) {
+  // Update step indicators
+  if (stepIndex >= 0 && stepIndex < execSteps.length) {
+    // Mark completed
+    const el = document.getElementById('estep-' + stepIndex);
+    if (el) {
+      el.className = 'exec-step done';
+      el.querySelector('.si').textContent = '✅';
+    }
+    // Activate next
+    const nextEl = document.getElementById('estep-' + (stepIndex + 1));
+    if (nextEl) {
+      nextEl.className = 'exec-step active';
+      nextEl.querySelector('.si').textContent = '⏳';
+    }
+    // Progress
+    execCompletedSteps = stepIndex + 1;
+    const pct = Math.round((execCompletedSteps / Math.max(execSteps.length, 1)) * 100);
+    document.getElementById('exec-bar').style.width = pct + '%';
+  }
+
+  // Append log
+  const log = document.getElementById('exec-log');
+  const ts = new Date().toTimeString().substring(0, 8);
+  const line = document.createElement('div');
+  line.innerHTML = '<span class="log-time">[' + ts + ']</span> ' +
+    (stepIndex >= 0 ? '<span class="log-ok">' + escHtml(message) + '</span>' : escHtml(message));
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function onToolComplete(success, duration, requiresReboot) {
+  // Fill progress to 100%
+  document.getElementById('exec-bar').style.width = '100%';
+
+  // Short delay then show result
+  setTimeout(() => showResult(success, duration, requiresReboot), 500);
+}
+
+/* ====== RESULT ====== */
+function showResult(success, duration, requiresReboot) {
+  const sym = currentSymptom || {};
+  const el = document.getElementById('result-content');
+
+  if (success) {
+    let tipText = '';
+    if (requiresReboot) {
+      tipText = '다음 단계: 재부팅 후에 완전히 적용됩니다. 작업을 저장하고 재부팅해주세요.';
+    } else {
+      tipText = '다음 단계: 문제가 해결되었는지 확인해보세요. 아직 증상이 있으면 다른 방법을 시도해보세요.';
+    }
+
+    el.innerHTML =
+      '<div class="result-icon">✅</div>' +
+      '<div class="result-title ok">해결 완료!</div>' +
+      '<div class="result-desc">' + escHtml(sym.title || '') + ' 이(가) 성공적으로 완료되었습니다.</div>' +
+      '<div class="result-tip">💡 <strong>' + escHtml(tipText) + '</strong></div>' +
+      '<div class="exec-btns">' +
+        '<button class="btn-secondary" onclick="goBackToDetail()">다른 방법 시도</button>' +
+        '<button class="btn-primary" onclick="go(\'home\')">홈으로 돌아가기</button>' +
+      '</div>';
+  } else {
+    let failTipHtml = '';
+    if (sym.fail_tip) {
+      failTipHtml = '<div class="result-tip fail-tip">💡 ' + escHtml(sym.fail_tip) + '</div>';
+    }
+
+    el.innerHTML =
+      '<div class="result-icon">❌</div>' +
+      '<div class="result-title fail">해결되지 않았어요</div>' +
+      '<div class="result-desc">자동 해결에 실패했습니다.<br>다른 방법을 시도하거나 원격 지원을 요청하세요.</div>' +
+      failTipHtml +
+      '<div class="exec-btns">' +
+        '<button class="btn-secondary" onclick="goBackToDetail()">확인</button>' +
+        '<button class="btn-danger" onclick="openRemote()">📞 원격 지원</button>' +
+      '</div>';
+  }
+
+  go('result');
+}
+
+function goBackToDetail() {
+  if (currentCategoryId) {
+    showDetail(currentCategoryId);
+  } else {
+    go('home');
+  }
+}
+
+/* ====== ALL TOOLS ====== */
+function renderAllTools() {
+  const el = document.getElementById('alltools-content');
+  let html = '';
+  ALLTOOLS.forEach(section => {
+    html += '<div class="section-label">' + section.label + '</div>';
+    html += '<div class="all-tools-grid">';
+    section.tools.forEach(t => {
+      const spanStyle = t.span ? ' style="grid-column:span ' + t.span + (t.id === '_remote' ? ';border-color:var(--danger)' : '') + '"' : '';
+      const cls = t.disabled ? ' disabled' : '';
+      html += '<div class="mini-card' + cls + '"' + spanStyle + ' onclick="onToolCardClick(\'' + t.id + '\',' + !!t.disabled + ')">' +
+        '<span class="mi">' + t.icon + '</span>' +
+        '<div class="mn">' + escHtml(t.name) + '</div>' +
+        '<div class="md">' + escHtml(t.desc) + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function onToolCardClick(toolId, disabled) {
+  if (disabled) return;
+  if (toolId === '_remote') { openRemote(); return; }
+  // Navigate to the category containing this tool
+  for (const cat of (APP.symptomMap.categories || [])) {
+    for (const sym of (cat.symptoms || [])) {
+      if (sym.tool_id === toolId) {
+        showDetail(cat.id);
+        return;
+      }
+    }
+  }
+}
+
+/* ====== HISTORY ====== */
+async function loadHistory() {
+  const el = document.getElementById('history-content');
+  let records = [];
+  try {
+    records = await pywebview.api.get_history(30);
+  } catch(e) {}
+
+  if (records.length === 0) {
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+        '<div style="font-size:16px;font-weight:700;color:var(--gray-900);">실행 기록</div>' +
+      '</div>' +
+      '<div class="empty-state"><span class="ei">📋</span><div class="et">아직 실행 기록이 없습니다</div></div>';
+    return;
+  }
+
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
+    '<div style="font-size:16px;font-weight:700;color:var(--gray-900);">실행 기록</div>' +
+  '</div>';
+  html += '<div style="border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">';
+
+  records.forEach(r => {
+    const ok = r.success;
+    const ts = (r.timestamp || '').replace('T', ' ').substring(0, 16);
+    html +=
+      '<div class="history-item">' +
+        '<div class="history-left">' +
+          '<div class="history-icon ' + (ok ? 'ok' : 'fail') + '">' + (ok ? '✅' : '❌') + '</div>' +
+          '<div><div class="history-name">' + escHtml(r.tool_name || r.tool_id || '') + '</div>' +
+          '<div class="history-desc">' + escHtml(r.symptom_title || '') + '</div></div>' +
+        '</div>' +
+        '<div class="history-right">' +
+          '<div class="history-status ' + (ok ? 'ok' : 'fail') + '">' + (ok ? '성공' : '실패') + '</div>' +
+          '<div class="history-date">' + escHtml(ts) + '</div>' +
+        '</div>' +
+      '</div>';
+  });
+
+  html += '</div>';
+  html += '<div style="text-align:center;margin-top:14px;font-size:11px;color:var(--gray-400);">최근 30일간의 기록을 표시합니다</div>';
+  el.innerHTML = html;
+}
+
+/* ====== NAVIGATION ====== */
+function go(id) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+  // Show target
+  const el = document.getElementById('s-' + id);
+  if (el) el.classList.add('active');
+
+  // Scroll to top
+  document.querySelector('.screen-container').scrollTop = 0;
+
+  // Tab state
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  if (id === 'alltools') document.getElementById('tab-tools').classList.add('active');
+  else if (id === 'history') {
+    document.getElementById('tab-history').classList.add('active');
+    loadHistory(); // refresh
+  }
+  else if (id === 'guide') document.getElementById('tab-guide').classList.add('active');
+  else document.getElementById('tab-home').classList.add('active');
+}
+
+function openRemote() {
+  const url = APP.config.remote_url || 'https://367.co.kr';
+  try { pywebview.api.open_url(url); } catch(e) { window.open(url); }
+}
+
+/* ====== HELPERS ====== */
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escText(s) {
+  return s || '';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+*.exe
+data/logs/
+.claude/
+docs/
+*.png
+.bkit/
+.pdca-status.json
+.bkit-memory.json
