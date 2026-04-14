@@ -195,8 +195,22 @@ def main():
     from updater import Updater
     import config
     updater = Updater(config.APP_VERSION, config.GITHUB_REPO)
-    if updater.check_and_update():
+    result = updater.check_and_update()
+    if result == "updated":
         return
+    elif result == "failed":
+        import tkinter as tk
+        from tkinter import messagebox
+        _root = tk.Tk()
+        _root.withdraw()
+        messagebox.showwarning(
+            "업데이트 확인 실패",
+            "최신 버전 확인에 실패했습니다.\n\n"
+            "인터넷 연결을 확인하시거나\n"
+            "전산팀에 연락해주세요.\n\n"
+            "확인을 누르면 현재 버전으로 실행됩니다.",
+        )
+        _root.destroy()
 
     # pywebview 앱 시작
     import webview

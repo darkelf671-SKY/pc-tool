@@ -1,78 +1,50 @@
-"""GitHub Release 자동 업데이트 — 사용자 확인 없이 자동 실행"""
+"""GitHub Release 자동 업데이트 — 실패 시 사용자 알림"""
 
-import json
 import os
 import sys
 import subprocess
 import tempfile
-import time
 
 
 class Updater:
     def __init__(self, current_version: str, repo: str):
         self._current = current_version
         self._api_url = f"https://api.github.com/repos/{repo}/releases/latest"
-        self._cache_file = self._get_cache_path()
 
-    def _get_cache_path(self) -> str:
-        if getattr(sys, "frozen", False):
-            base = os.path.dirname(sys.executable)
-        else:
-            base = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(base, "data", ".update_cache.json")
-
-    def _load_cache(self) -> dict:
-        try:
-            with open(self._cache_file, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-
-    def _save_cache(self, data: dict):
-        try:
-            os.makedirs(os.path.dirname(self._cache_file), exist_ok=True)
-            with open(self._cache_file, "w", encoding="utf-8") as f:
-                json.dump(data, f)
-        except Exception:
-            pass
-
-    def check_and_update(self) -> bool:
+    def check_and_update(self) -> str:
         """
         새 버전 있으면 자동 다운로드 → EXE 교체 → 재시작.
-        Returns: True=업데이트 진행(앱 종료 필요), False=최신 버전
+        Returns:
+            "updated" — 업데이트 진행 중 (앱 종료됨)
+            "latest"  — 이미 최신 버전
+            "failed"  — 업데이트 확인/다운로드 실패
         """
-        # GitHub 접속 불가 캐시: 마지막 실패 후 1시간 동안 재시도 안 함
-        cache = self._load_cache()
-        last_fail = cache.get("last_fail", 0)
-        if time.time() - last_fail < 3600:
-            return False
+        # 개발 환경(python main.py)에서는 업데이트 안 함
+        if not getattr(sys, "frozen", False):
+            return "latest"
 
         try:
             import requests
             resp = requests.get(self._api_url, timeout=3)
             if resp.status_code != 200:
-                self._save_cache({"last_fail": time.time()})
-                return False
+                return "failed"
 
             release = resp.json()
             latest = release.get("tag_name", "").lstrip("v")
 
             if not self._is_newer(latest, self._current):
-                # 최신 버전 — 실패 캐시 초기화
-                self._save_cache({})
-                return False
+                return "latest"
 
             asset = self._find_exe_asset(release.get("assets", []))
             if not asset:
-                return False
+                return "failed"
 
             new_exe = self._download(asset["browser_download_url"])
             self._replace_and_restart(new_exe)
-            return True
+            return "updated"
 
         except Exception:
-            self._save_cache({"last_fail": time.time()})
-            return False
+            return "failed"
 
     def _is_newer(self, latest: str, current: str) -> bool:
         try:
