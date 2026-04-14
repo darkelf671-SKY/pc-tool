@@ -63,20 +63,17 @@ class Updater:
         return tmp.name
 
     def _replace_and_restart(self, new_exe: str):
-        """BAT 스크립트로 EXE 교체 후 재시작 (파일 잠금 우회)"""
+        """PowerShell 스크립트로 EXE 교체 후 재시작 (파일 잠금 + 한글 경로 대응)"""
         current_exe = sys.executable
-        bat_script = f"""@echo off
-timeout /t 2 /nobreak >nul
-copy /y "{new_exe}" "{current_exe}"
-del "{new_exe}"
-start "" "{current_exe}"
-del "%~f0"
-"""
-        bat_path = new_exe + ".bat"
-        with open(bat_path, "w", encoding="utf-8") as f:
-            f.write(bat_script)
+        ps_script = (
+            f"Start-Sleep -Seconds 3; "
+            f"Copy-Item -LiteralPath '{new_exe}' -Destination '{current_exe}' -Force; "
+            f"Remove-Item -LiteralPath '{new_exe}' -Force; "
+            f"Start-Process -FilePath '{current_exe}'; "
+        )
         subprocess.Popen(
-            ["cmd", "/c", bat_path],
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-Command", ps_script],
             creationflags=subprocess.CREATE_NO_WINDOW,
         )
         sys.exit(0)

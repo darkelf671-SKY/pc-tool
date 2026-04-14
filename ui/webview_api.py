@@ -21,7 +21,7 @@ class WebViewAPI:
 
     def __init__(self):
         self._window = None
-        self._logger = ToolLogger(self._resolve_path(config.LOG_DIR))
+        self._logger = ToolLogger(self._writable_path(config.LOG_DIR))
         self._symptom_map = self._load_symptom_map()
 
     def set_window(self, window):
@@ -30,11 +30,23 @@ class WebViewAPI:
     # -- 경로 --
 
     def _resolve_path(self, rel_path: str) -> str:
+        """읽기용 경로 — 번들 데이터(_MEIPASS) 우선"""
         if getattr(sys, "frozen", False):
-            base = os.path.dirname(sys.executable)
+            meipass = os.path.join(sys._MEIPASS, rel_path)
+            if os.path.exists(meipass):
+                return meipass
+            return os.path.join(os.path.dirname(sys.executable), rel_path)
         else:
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        return os.path.join(base, rel_path)
+            return os.path.join(base, rel_path)
+
+    def _writable_path(self, rel_path: str) -> str:
+        """쓰기용 경로 — 항상 EXE 옆 (또는 프로젝트 루트)"""
+        if getattr(sys, "frozen", False):
+            return os.path.join(os.path.dirname(sys.executable), rel_path)
+        else:
+            base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            return os.path.join(base, rel_path)
 
     # -- 데이터 로드 --
 

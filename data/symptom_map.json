@@ -128,7 +128,14 @@
           "title": "다른 PC에서는 EMR이 되는데 내 것만 안 돼요",
           "explain": "EMR 클라이언트 파일이 손상되었거나 업데이트가 꼬여있을 수 있습니다. 서버 접속 설정을 백업한 후 EMR을 깨끗하게 다시 설치합니다. 처방, 환자 데이터는 서버에 있으므로 안전합니다.",
           "tool_id": "his_reinstall",
-          "tags": ["no_reboot", "1min"]
+          "tags": ["no_reboot", "1min"],
+          "confirm_steps": [
+            "EMR 프로세스 종료",
+            "설치 파일 7개를 C:\\setup에 백업",
+            "기존 EMR 폴더 삭제 후 LiveUpdate로 재설치"
+          ],
+          "warning": "EMR이 설치되어 있지 않은 PC에서는 실행할 수 없습니다.",
+          "fail_tip": "전산팀에 문의하세요."
         },
         {
           "id": "outlook_store_broken",
