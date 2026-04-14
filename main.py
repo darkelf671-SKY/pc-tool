@@ -30,18 +30,7 @@ def ensure_admin():
 
 def _check_webview2() -> bool:
     """WebView2 Runtime 설치 여부 확인 (API 호출 → 레지스트리 → 폴더 순)"""
-    # 1순위: WebView2Loader DLL로 직접 확인 (가장 정확)
-    try:
-        from ctypes import wintypes
-        loader = ctypes.windll.LoadLibrary("WebView2Loader.dll")
-        ver_buf = ctypes.create_unicode_buffer(256)
-        hr = loader.GetAvailableCoreWebView2BrowserVersionString(None, ctypes.byref(ver_buf))
-        if hr == 0 and ver_buf.value:
-            return True
-    except Exception:
-        pass
-
-    # 2순위: 레지스트리 확인
+    # 1순위: 레지스트리 확인
     reg_paths = [
         (winreg.HKEY_LOCAL_MACHINE,
          r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients"
