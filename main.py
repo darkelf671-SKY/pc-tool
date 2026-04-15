@@ -179,9 +179,58 @@ def _html_path() -> str:
     return os.path.join(base, "ui", "index.html")
 
 
+def _apply_pending_update():
+    """이전 업데이트에서 남은 pending EXE 적용 + .old 정리"""
+    if not getattr(sys, "frozen", False):
+        return
+
+    import shutil
+    current_exe = sys.executable
+    app_dir = os.path.dirname(current_exe)
+    pending = os.path.join(app_dir, "update_pending.exe")
+    bak = current_exe + ".old"
+
+    # .old 정리 (이전 업데이트 잔여)
+    if os.path.exists(bak):
+        try:
+            os.remove(bak)
+        except OSError:
+            pass
+
+    if not os.path.exists(pending):
+        return
+
+    # pending EXE → 현재 위치에 적용
+    try:
+        os.rename(current_exe, bak)
+        shutil.copy2(pending, current_exe)
+        if os.path.getsize(current_exe) == os.path.getsize(pending):
+            # 성공: 정리 + 새 EXE로 재시작
+            for f in (bak, pending):
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
+            subprocess.Popen([current_exe])
+            sys.exit(0)
+        else:
+            # 크기 불일치: 롤백
+            os.remove(current_exe)
+            os.rename(bak, current_exe)
+    except OSError:
+        pass
+
+    # 실패 시 pending 삭제 (무한 재시도 방지)
+    try:
+        os.remove(pending)
+    except OSError:
+        pass
+
+
 def main():
     set_dpi_awareness()
     ensure_admin()
+    _apply_pending_update()
 
     # WebView2 Runtime 확인 + 자동 설치
     if not _check_webview2():

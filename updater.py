@@ -1,6 +1,7 @@
 """GitHub Release 자동 업데이트 — 진행 상태 UI + 안정적 EXE 교체"""
 
 import os
+import shutil
 import sys
 import subprocess
 import tempfile
@@ -150,78 +151,58 @@ class Updater:
     # ── EXE 교체 + 재시작 ──
 
     def _replace_and_restart(self, new_exe: str):
-        """PowerShell: Rename→Copy→Verify→Launch (rollback on failure)"""
+        """Python rename+copy로 EXE 교체 (PowerShell 불필요).
+
+        PyInstaller --onefile은 _MEI 추출 후 원본 EXE 잠금 해제 →
+        Python 내부에서 직접 rename+copy 가능.
+        실패 시 update_pending.exe로 저장 → 다음 실행 때 main.py가 적용.
+        """
         current_exe = sys.executable
-        mei_dir = getattr(sys, "_MEIPASS", "")
+        app_dir = os.path.dirname(current_exe)
+        bak_exe = current_exe + ".old"
+        pending = os.path.join(app_dir, "update_pending.exe")
 
-        # _MEI 정리 스크립트 (있을 때만)
-        mei_cleanup = ""
-        if mei_dir:
-            mei_cleanup = (
-                f"if (Test-Path -LiteralPath '{mei_dir}') {{ "
-                f"Remove-Item -LiteralPath '{mei_dir}' -Recurse -Force "
-                "-ErrorAction SilentlyContinue }}; "
-            )
+        # 이전 잔여 파일 정리
+        for f in (bak_exe, pending):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
-        ps_script = (
-            f"$exe = '{current_exe}'; "
-            f"$newExe = '{new_exe}'; "
-            "$bak = \"$exe.bak\"; "
+        replaced = False
+        try:
+            # Step 1: 현재 EXE → .old 이름변경
+            os.rename(current_exe, bak_exe)
+            try:
+                # Step 2: 새 EXE → 원래 경로 복사
+                shutil.copy2(new_exe, current_exe)
+                if os.path.getsize(current_exe) == os.path.getsize(new_exe):
+                    replaced = True
+                else:
+                    # 크기 불일치 → 롤백
+                    os.remove(current_exe)
+                    os.rename(bak_exe, current_exe)
+            except OSError:
+                # 복사 실패 → 롤백
+                if not os.path.exists(current_exe) and os.path.exists(bak_exe):
+                    os.rename(bak_exe, current_exe)
+        except OSError:
+            # rename 실패 (EXE 잠김) → pending으로 넘김
+            pass
 
-            # 1) 프로세스 완전 종료 대기 (최대 15초)
-            "for ($i = 0; $i -lt 30; $i++) { "
-            "  if (-not (Get-Process | Where-Object { $_.Path -eq $exe } "
-            "    -ErrorAction SilentlyContinue)) { break }; "
-            "  Start-Sleep -Milliseconds 500 "
-            "}; "
-            "Start-Sleep -Seconds 2; "
+        if replaced:
+            # 성공: 임시파일 정리 + 새 EXE 실행
+            for f in (bak_exe, new_exe):
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
+            subprocess.Popen([current_exe])
+        else:
+            # 실패: pending 저장 → 다음 실행 시 main.py가 적용
+            try:
+                shutil.move(new_exe, pending)
+            except OSError:
+                pass
 
-            # 2) _MEI 임시폴더 삭제
-            + mei_cleanup +
-
-            # 3) 기존 EXE → .bak 이름변경 (삭제보다 안전, 롤백 가능)
-            "Remove-Item -LiteralPath $bak -Force -ErrorAction SilentlyContinue; "
-            "$renamed = $false; "
-            "for ($i = 0; $i -lt 10; $i++) { "
-            "  try { "
-            "    Move-Item -LiteralPath $exe -Destination $bak -Force "
-            "      -ErrorAction Stop; "
-            "    $renamed = $true; break "
-            "  } catch { Start-Sleep -Seconds 1 } "
-            "}; "
-
-            # 4) 새 EXE 복사 + 파일 크기 검증
-            "if ($renamed) { "
-            "  try { "
-            "    Copy-Item -LiteralPath $newExe -Destination $exe -Force "
-            "      -ErrorAction Stop; "
-            "    $srcSize = (Get-Item -LiteralPath $newExe).Length; "
-            "    $dstSize = (Get-Item -LiteralPath $exe).Length; "
-            "    if ($dstSize -eq $srcSize) { "
-            # 성공: .bak + temp 삭제 → 새 EXE 실행
-            "      Remove-Item -LiteralPath $bak -Force "
-            "        -ErrorAction SilentlyContinue; "
-            "      Remove-Item -LiteralPath $newExe -Force "
-            "        -ErrorAction SilentlyContinue; "
-            "      Start-Process -FilePath $exe "
-            "    } else { "
-            # 크기 불일치: 롤백
-            "      Remove-Item -LiteralPath $exe -Force "
-            "        -ErrorAction SilentlyContinue; "
-            "      Move-Item -LiteralPath $bak -Destination $exe -Force "
-            "    } "
-            "  } catch { "
-            # 복사 실패: 롤백
-            "    Remove-Item -LiteralPath $exe -Force "
-            "      -ErrorAction SilentlyContinue; "
-            "    Move-Item -LiteralPath $bak -Destination $exe -Force "
-            "      -ErrorAction SilentlyContinue "
-            "  } "
-            "} "
-        )
-        subprocess.Popen(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
-             "-Command", ps_script],
-            creationflags=subprocess.CREATE_NO_WINDOW,
-        )
         sys.exit(0)
