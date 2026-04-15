@@ -5,9 +5,6 @@ import os
 import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PYTHON_DIR = os.path.dirname(sys.executable)
-TCL_DIR = os.path.join(PYTHON_DIR, "tcl", "tcl8.6")
-TK_DIR = os.path.join(PYTHON_DIR, "tcl", "tk8.6")
 
 PyInstaller.__main__.run([
     os.path.join(BASE_DIR, "main.py"),
@@ -17,9 +14,6 @@ PyInstaller.__main__.run([
     # 데이터 파일
     "--add-data", f"{os.path.join(BASE_DIR, 'data', 'symptom_map.json')};data",
     "--add-data", f"{os.path.join(BASE_DIR, 'ui', 'index.html')};ui",
-    # Tcl/Tk 데이터 (PyInstaller 번들링 누락 방지)
-    "--add-data", f"{TCL_DIR};_tcl_data",
-    "--add-data", f"{TK_DIR};_tk_data",
     # 모든 도구 모듈
     "--hidden-import", "tools.printer_spooler",
     "--hidden-import", "tools.winupdate_cache",
@@ -37,13 +31,6 @@ PyInstaller.__main__.run([
     "--hidden-import", "tools.teams_reinstall",
     "--hidden-import", "tools.his_reinstall",
     "--hidden-import", "tools.banking_reset",
-    # pywebview + pythonnet 의존성
-    "--hidden-import", "_cffi_backend",
-    "--hidden-import", "clr_loader",
-    "--hidden-import", "clr_loader.ffi",
-    "--hidden-import", "clr_loader.netfx",
-    "--hidden-import", "clr_loader.hostfxr",
-    "--hidden-import", "pythonnet",
     # 관리자 권한
     "--uac-admin",
     "--clean",

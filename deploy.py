@@ -102,7 +102,10 @@ def _generate_changelog() -> str:
         )
         stdout = (log_result.stdout or b"").decode("utf-8", errors="replace").strip()
         if log_result.returncode == 0 and stdout:
-            return stdout
+            # release/chore 커밋 제외
+            lines = [l for l in stdout.splitlines()
+                     if not l.lstrip("- ").startswith(("release:", "chore:"))]
+            return "\n".join(lines) if lines else "- "
     except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
         pass
     return "- "
