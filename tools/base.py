@@ -33,10 +33,12 @@ class BaseTool(ABC):
 
     def _run_cmd(self, cmd: str, log: Callable,
                  timeout: int = 30) -> tuple[int, str]:
-        """subprocess 명령 실행"""
+        """subprocess 명령 실행 (UTF-8 강제)"""
         try:
+            # chcp 65001: cmd.exe 출력을 UTF-8로 강제
+            full_cmd = f"chcp 65001 >nul && {cmd}"
             result = subprocess.run(
-                cmd, shell=True, capture_output=True,
+                full_cmd, shell=True, capture_output=True,
                 text=True, timeout=timeout, encoding="utf-8",
                 errors="replace",
             )
@@ -54,10 +56,15 @@ class BaseTool(ABC):
 
     def _run_ps(self, script: str, log: Callable,
                 timeout: int = 30) -> tuple[int, str]:
-        """PowerShell 스크립트 실행"""
+        """PowerShell 스크립트 실행 (UTF-8 출력 강제)"""
+        # [Console]::OutputEncoding으로 PS 출력도 UTF-8 강제
+        utf8_prefix = (
+            "[Console]::OutputEncoding="
+            "[System.Text.Encoding]::UTF8; "
+        )
         cmd = (
             f'powershell -NoProfile -ExecutionPolicy Bypass '
-            f'-Command "{script}"'
+            f'-Command "{utf8_prefix}{script}"'
         )
         return self._run_cmd(cmd, log, timeout)
 

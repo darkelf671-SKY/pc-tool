@@ -265,9 +265,9 @@ class DeployApp(tk.Tk):
 
     def _do_deploy(self, version: str, changelog: str):
         # ── Step 1: gh CLI 확인 ──
-        self.after(0, lambda: self._set_status("[1/5] gh CLI 확인 중..."))
+        self.after(0, lambda: self._set_status("[1/7] gh CLI 확인 중..."))
         self.after(0, lambda: self._set_progress(5))
-        self.after(0, lambda: self._log_append("[1/5] gh CLI 설치 확인..."))
+        self.after(0, lambda: self._log_append("[1/7] gh CLI 설치 확인..."))
 
         if not _check_gh_cli():
             self.after(0, lambda: self._on_error(
@@ -280,15 +280,15 @@ class DeployApp(tk.Tk):
         self.after(0, lambda: self._log_append("  → gh CLI 확인 완료"))
 
         # ── Step 2: GitHub 인증 ──
-        self.after(0, lambda: self._set_status("[2/5] GitHub 인증 확인 중..."))
+        self.after(0, lambda: self._set_status("[2/7] GitHub 인증 확인 중..."))
         self.after(0, lambda: self._set_progress(15))
-        self.after(0, lambda: self._log_append("[2/5] GitHub 인증 상태 확인..."))
+        self.after(0, lambda: self._log_append("[2/7] GitHub 인증 상태 확인..."))
 
         if not _check_gh_auth():
             self.after(0, lambda: self._log_append(
                 "  → 미인증 상태. 브라우저 인증을 시작합니다..."))
             self.after(0, lambda: self._set_status(
-                "[2/5] 브라우저에서 GitHub 로그인 중...", "#cc6600"))
+                "[2/7] 브라우저에서 GitHub 로그인 중...", "#cc6600"))
 
             if not _gh_auth_login():
                 self.after(0, lambda: self._on_error(
@@ -309,19 +309,53 @@ class DeployApp(tk.Tk):
         self.after(0, lambda: self._log_append("  → 중복 없음"))
 
         # ── Step 3: APP_VERSION 갱신 ──
-        self.after(0, lambda: self._set_status("[3/5] 버전 갱신 중..."))
+        self.after(0, lambda: self._set_status("[3/7] 버전 갱신 중..."))
         self.after(0, lambda: self._set_progress(25))
         self.after(0, lambda: self._log_append(
-            f"[3/5] config.py APP_VERSION: {self._current_ver} → {version}"))
+            f"[3/7] config.py APP_VERSION: {self._current_ver} → {version}"))
 
         _set_version(version.lstrip("v"))
         self.after(0, lambda: self._log_append("  → 버전 갱신 완료"))
 
-        # ── Step 4: EXE 빌드 ──
-        self.after(0, lambda: self._set_status("[4/5] EXE 빌드 중... (1~2분 소요)"))
-        self.after(0, lambda: self._set_progress(35))
+        # ── Step 4: git commit + push ──
+        self.after(0, lambda: self._set_status("[4/7] git 커밋 + 푸시 중..."))
+        self.after(0, lambda: self._set_progress(30))
         self.after(0, lambda: self._log_append(
-            "[4/5] EXE 빌드 시작 (PyInstaller)..."))
+            f"[4/7] 변경사항 git 커밋 + 푸시..."))
+
+        # 모든 변경 파일 스테이징 + 커밋
+        subprocess.run(
+            ["git", "add", "-A"],
+            cwd=str(ROOT), capture_output=True, timeout=30,
+        )
+        commit_result = subprocess.run(
+            ["git", "commit", "-m", f"release: {version}"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=30,
+        )
+        if commit_result.returncode == 0:
+            self.after(0, lambda: self._log_append("  → 커밋 완료"))
+        else:
+            self.after(0, lambda: self._log_append(
+                "  → 커밋 스킵 (변경사항 없음 또는 이미 커밋됨)"))
+
+        push_result = subprocess.run(
+            ["git", "push"],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=60,
+        )
+        if push_result.returncode == 0:
+            self.after(0, lambda: self._log_append("  → 푸시 완료"))
+        else:
+            err = push_result.stderr or push_result.stdout or ""
+            self.after(0, lambda: self._log_append(f"  → 푸시 실패: {err[:200]}"))
+            self.after(0, lambda: self._on_error(
+                f"git push에 실패했습니다.\n{err[:300]}"))
+            return
+
+        # ── Step 5: EXE 빌드 ──
+        self.after(0, lambda: self._set_status("[5/7] EXE 빌드 중... (1~2분 소요)"))
+        self.after(0, lambda: self._set_progress(40))
+        self.after(0, lambda: self._log_append(
+            "[5/7] EXE 빌드 시작 (PyInstaller)..."))
 
         build_result = subprocess.run(
             [sys.executable, str(ROOT / "build_exe.py")],
@@ -347,12 +381,12 @@ class DeployApp(tk.Tk):
         size_mb = exe_path.stat().st_size / (1024 * 1024)
         self.after(0, lambda: self._log_append(
             f"  → 빌드 완료: {EXE_NAME} ({size_mb:.1f} MB)"))
-        self.after(0, lambda: self._set_progress(70))
+        self.after(0, lambda: self._set_progress(75))
 
-        # ── Step 5: GitHub Release 생성 + 업로드 ──
-        self.after(0, lambda: self._set_status("[5/5] GitHub Release 업로드 중..."))
+        # ── Step 6: GitHub Release 생성 + 업로드 ──
+        self.after(0, lambda: self._set_status("[6/7] GitHub Release 업로드 중..."))
         self.after(0, lambda: self._log_append(
-            f"[5/5] GitHub Release 생성: {version}"))
+            f"[6/7] GitHub Release 생성: {version}"))
         self.after(0, lambda: self._log_append(
             f"  → 저장소: {REPO}"))
         self.after(0, lambda: self._log_append(
@@ -382,6 +416,12 @@ class DeployApp(tk.Tk):
             f"  → 업로드 완료!"))
         self.after(0, lambda: self._log_append(
             f"  → {release_url}"))
+        self.after(0, lambda: self._set_progress(95))
+
+        # ── Step 7: 완료 ──
+        self.after(0, lambda: self._set_status("[7/7] 배포 완료!"))
+        self.after(0, lambda: self._log_append(
+            f"[7/7] 배포 완료: {version}"))
         self.after(0, lambda: self._set_progress(100))
         self.after(0, lambda: self._on_success(version, release_url))
 

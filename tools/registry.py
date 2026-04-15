@@ -16,6 +16,7 @@ from tools.ime_fix import ImeFixTool
 from tools.ms_account_cleanup import MsAccountCleanupTool
 from tools.teams_reinstall import TeamsReinstallTool
 from tools.his_reinstall import HisReinstallTool
+from tools.banking_reset import BankingResetTool
 
 TOOL_REGISTRY: dict[str, type[BaseTool]] = {
     "printer_spooler": PrinterSpoolerTool,
@@ -33,6 +34,7 @@ TOOL_REGISTRY: dict[str, type[BaseTool]] = {
     "ms_account_cleanup": MsAccountCleanupTool,
     "teams_reinstall": TeamsReinstallTool,
     "his_reinstall": HisReinstallTool,
+    "banking_reset": BankingResetTool,
 }
 
 

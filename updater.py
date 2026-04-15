@@ -152,13 +152,18 @@ class Updater:
     def _replace_and_restart(self, new_exe: str):
         """PowerShell 스크립트로 EXE 교체 후 재시작"""
         current_exe = sys.executable
-        # 파일 잠금 해제 대기 + 복사 완료 검증 + Verb RunAs로 UAC 처리
+        mei_dir = getattr(sys, "_MEIPASS", "")
+        # 1) 프로세스 종료 대기  2) _MEI 임시폴더 정리  3) EXE 복사  4) 재시작
         ps_script = (
             "$maxWait = 15; $waited = 0; "
             f"while ((Get-Process | Where-Object {{ $_.Path -eq '{current_exe}' }}) -and ($waited -lt $maxWait)) {{ "
             "  Start-Sleep -Milliseconds 500; $waited++; "
             "}; "
-            "Start-Sleep -Seconds 1; "
+            "Start-Sleep -Seconds 2; "
+            # _MEI 임시폴더 잔존 시 삭제 (python311.dll 충돌 방지)
+            f"if (Test-Path -LiteralPath '{mei_dir}') {{ "
+            f"  Remove-Item -LiteralPath '{mei_dir}' -Recurse -Force -ErrorAction SilentlyContinue; "
+            "}; "
             f"Copy-Item -LiteralPath '{new_exe}' -Destination '{current_exe}' -Force; "
             f"if (Test-Path -LiteralPath '{current_exe}') {{ "
             f"  Remove-Item -LiteralPath '{new_exe}' -Force; "

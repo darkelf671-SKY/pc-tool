@@ -30,6 +30,7 @@ PyInstaller.__main__.run([
     "--hidden-import", "tools.ms_account_cleanup",
     "--hidden-import", "tools.teams_reinstall",
     "--hidden-import", "tools.his_reinstall",
+    "--hidden-import", "tools.banking_reset",
     # 관리자 권한
     "--uac-admin",
     "--clean",
