@@ -103,7 +103,7 @@ class ScreenAllTools(tk.Frame):
             bg=COLORS["white"],
         ).pack()
         tk.Label(
-            sup_inner, text="원격 지원 요청 (367.co.kr)",
+            sup_inner, text="원격 지원 요청 (helpu.kr)",
             font=FONTS["small_bold"], bg=COLORS["white"],
             fg=COLORS["gray_800"],
         ).pack(pady=(4, 0))

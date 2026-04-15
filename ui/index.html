@@ -452,7 +452,7 @@ const ALLTOOLS = [
     { icon:'📶', name:'WiFi 수리', desc:'끊김/느림 해결', id:'wifi_fix', disabled:true },
   ]},
   { label: '지원', tools: [
-    { icon:'📞', name:'원격 지원 요청 (367.co.kr)', desc:'전산팀이 원격으로 도와드립니다', id:'_remote', span:3 },
+    { icon:'📞', name:'원격 지원 요청 (helpu.kr)', desc:'전산팀이 원격으로 도와드립니다', id:'_remote', span:3 },
   ]},
 ];
 
@@ -877,7 +877,7 @@ function go(id) {
 }
 
 function openRemote() {
-  const url = APP.config.remote_url || 'https://367.co.kr';
+  const url = APP.config.remote_url || 'https://helpu.kr/seoulrh';
   try { pywebview.api.open_url(url); } catch(e) { window.open(url); }
 }
 
