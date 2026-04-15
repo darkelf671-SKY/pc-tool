@@ -7,6 +7,18 @@ import os
 import winreg
 
 
+def _fix_tcl_path():
+    """PyInstaller frozen 환경에서 Tcl/Tk 경로 설정"""
+    if getattr(sys, "frozen", False):
+        base = sys._MEIPASS
+        tcl = os.path.join(base, "tcl8.6")
+        tk = os.path.join(base, "tk8.6")
+        if os.path.isdir(tcl):
+            os.environ["TCL_LIBRARY"] = tcl
+        if os.path.isdir(tk):
+            os.environ["TK_LIBRARY"] = tk
+
+
 def set_dpi_awareness():
     """DPI 인식 설정"""
     try:
@@ -228,6 +240,7 @@ def _apply_pending_update():
 
 
 def main():
+    _fix_tcl_path()
     set_dpi_awareness()
     ensure_admin()
     _apply_pending_update()
