@@ -79,6 +79,35 @@ def _gh_auth_login() -> bool:
         return False
 
 
+def _generate_changelog() -> str:
+    """최근 릴리즈 태그 이후 커밋 메시지에서 변경사항 자동 생성"""
+    try:
+        # 최근 태그 찾기
+        tag_result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            capture_output=True, timeout=10,
+            cwd=str(ROOT),
+        )
+        if tag_result.returncode == 0:
+            last_tag = tag_result.stdout.decode("utf-8", errors="replace").strip()
+            log_range = f"{last_tag}..HEAD"
+        else:
+            log_range = "HEAD~10..HEAD"
+
+        # 커밋 메시지 수집
+        log_result = subprocess.run(
+            ["git", "log", log_range, "--pretty=format:- %s"],
+            capture_output=True, timeout=10,
+            cwd=str(ROOT),
+        )
+        stdout = (log_result.stdout or b"").decode("utf-8", errors="replace").strip()
+        if log_result.returncode == 0 and stdout:
+            return stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        pass
+    return "- "
+
+
 def _check_release_exists(tag: str) -> bool:
     """해당 태그의 릴리즈가 이미 존재하는지 확인"""
     try:
@@ -152,7 +181,7 @@ class DeployApp(tk.Tk):
         )
         self._changelog.grid(
             row=4, column=1, columnspan=2, sticky="ew", **pad)
-        self._changelog.insert("1.0", "- ")
+        self._changelog.insert("1.0", _generate_changelog())
 
         # ── 구분선 ──
         ttk.Separator(main, orient="horizontal").grid(

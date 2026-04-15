@@ -37,6 +37,13 @@ PyInstaller.__main__.run([
     "--hidden-import", "tools.teams_reinstall",
     "--hidden-import", "tools.his_reinstall",
     "--hidden-import", "tools.banking_reset",
+    # pywebview + pythonnet 의존성
+    "--hidden-import", "_cffi_backend",
+    "--hidden-import", "clr_loader",
+    "--hidden-import", "clr_loader.ffi",
+    "--hidden-import", "clr_loader.netfx",
+    "--hidden-import", "clr_loader.hostfxr",
+    "--hidden-import", "pythonnet",
     # 관리자 권한
     "--uac-admin",
     "--clean",

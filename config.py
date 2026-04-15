@@ -1,7 +1,7 @@
 """PC Tool 설정 상수"""
 
 APP_NAME = "서울재활병원 PC 문제해결 도우미"
-APP_VERSION = "1.0.17"
+APP_VERSION = "1.0.18"
 AUTHOR = "서울재활병원 전산팀 장길섭"
 
 # GitHub 업데이트
