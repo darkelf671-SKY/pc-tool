@@ -150,24 +150,73 @@ class Updater:
     # ── EXE 교체 + 재시작 ──
 
     def _replace_and_restart(self, new_exe: str):
-        """PowerShell 스크립트로 EXE 교체 후 재시작"""
+        """PowerShell: Rename→Copy→Verify→Launch (rollback on failure)"""
         current_exe = sys.executable
         mei_dir = getattr(sys, "_MEIPASS", "")
-        # 1) 프로세스 종료 대기  2) _MEI 임시폴더 정리  3) EXE 복사  4) 재시작
+
+        # _MEI 정리 스크립트 (있을 때만)
+        mei_cleanup = ""
+        if mei_dir:
+            mei_cleanup = (
+                f"if (Test-Path -LiteralPath '{mei_dir}') {{ "
+                f"Remove-Item -LiteralPath '{mei_dir}' -Recurse -Force "
+                "-ErrorAction SilentlyContinue }}; "
+            )
+
         ps_script = (
-            "$maxWait = 15; $waited = 0; "
-            f"while ((Get-Process | Where-Object {{ $_.Path -eq '{current_exe}' }}) -and ($waited -lt $maxWait)) {{ "
-            "  Start-Sleep -Milliseconds 500; $waited++; "
+            f"$exe = '{current_exe}'; "
+            f"$newExe = '{new_exe}'; "
+            "$bak = \"$exe.bak\"; "
+
+            # 1) 프로세스 완전 종료 대기 (최대 15초)
+            "for ($i = 0; $i -lt 30; $i++) { "
+            "  if (-not (Get-Process | Where-Object { $_.Path -eq $exe } "
+            "    -ErrorAction SilentlyContinue)) { break }; "
+            "  Start-Sleep -Milliseconds 500 "
             "}; "
             "Start-Sleep -Seconds 2; "
-            # _MEI 임시폴더 잔존 시 삭제 (python311.dll 충돌 방지)
-            f"if (Test-Path -LiteralPath '{mei_dir}') {{ "
-            f"  Remove-Item -LiteralPath '{mei_dir}' -Recurse -Force -ErrorAction SilentlyContinue; "
+
+            # 2) _MEI 임시폴더 삭제
+            + mei_cleanup +
+
+            # 3) 기존 EXE → .bak 이름변경 (삭제보다 안전, 롤백 가능)
+            "Remove-Item -LiteralPath $bak -Force -ErrorAction SilentlyContinue; "
+            "$renamed = $false; "
+            "for ($i = 0; $i -lt 10; $i++) { "
+            "  try { "
+            "    Move-Item -LiteralPath $exe -Destination $bak -Force "
+            "      -ErrorAction Stop; "
+            "    $renamed = $true; break "
+            "  } catch { Start-Sleep -Seconds 1 } "
             "}; "
-            f"Copy-Item -LiteralPath '{new_exe}' -Destination '{current_exe}' -Force; "
-            f"if (Test-Path -LiteralPath '{current_exe}') {{ "
-            f"  Remove-Item -LiteralPath '{new_exe}' -Force; "
-            f"  Start-Process -FilePath '{current_exe}' -Verb RunAs; "
+
+            # 4) 새 EXE 복사 + 파일 크기 검증
+            "if ($renamed) { "
+            "  try { "
+            "    Copy-Item -LiteralPath $newExe -Destination $exe -Force "
+            "      -ErrorAction Stop; "
+            "    $srcSize = (Get-Item -LiteralPath $newExe).Length; "
+            "    $dstSize = (Get-Item -LiteralPath $exe).Length; "
+            "    if ($dstSize -eq $srcSize) { "
+            # 성공: .bak + temp 삭제 → 새 EXE 실행
+            "      Remove-Item -LiteralPath $bak -Force "
+            "        -ErrorAction SilentlyContinue; "
+            "      Remove-Item -LiteralPath $newExe -Force "
+            "        -ErrorAction SilentlyContinue; "
+            "      Start-Process -FilePath $exe "
+            "    } else { "
+            # 크기 불일치: 롤백
+            "      Remove-Item -LiteralPath $exe -Force "
+            "        -ErrorAction SilentlyContinue; "
+            "      Move-Item -LiteralPath $bak -Destination $exe -Force "
+            "    } "
+            "  } catch { "
+            # 복사 실패: 롤백
+            "    Remove-Item -LiteralPath $exe -Force "
+            "      -ErrorAction SilentlyContinue; "
+            "    Move-Item -LiteralPath $bak -Destination $exe -Force "
+            "      -ErrorAction SilentlyContinue "
+            "  } "
             "} "
         )
         subprocess.Popen(
