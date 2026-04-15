@@ -44,7 +44,10 @@ class ToolLogger:
                 for line in f:
                     line = line.strip()
                     if line:
-                        entries.append(json.loads(line))
+                        try:
+                            entries.append(json.loads(line))
+                        except (json.JSONDecodeError, ValueError):
+                            continue
             if len(entries) >= limit * 2:
                 break
         entries.sort(key=lambda e: e["timestamp"], reverse=True)

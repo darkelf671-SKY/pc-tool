@@ -198,11 +198,12 @@ class Updater:
                 except OSError:
                     pass
             subprocess.Popen([current_exe])
+            sys.exit(0)
         else:
             # 실패: pending 저장 → 다음 실행 시 main.py가 적용
             try:
                 shutil.move(new_exe, pending)
             except OSError:
                 pass
-
-        sys.exit(0)
+            # pending 저장 후 정상 종료 (다음 실행 시 적용됨)
+            sys.exit(0)

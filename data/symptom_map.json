@@ -227,27 +227,27 @@
           "tool_id": "ms_account_cleanup",
           "recommended": true,
           "recommended_text": "Outlook, Teams에 다른 계정이 뜰 때도 이 방법을 사용하세요.",
-          "tags": ["no_reboot", "15sec"],
+          "tags": ["reboot", "15sec"],
           "confirm_steps": [
             "Windows 자격 증명 관리자에서 이전 계정 정리",
             "MS 계정 캐시 토큰 삭제",
             "인증 시스템은 그대로 유지 (안전)"
           ],
-          "warning": "현재 로그인된 MS 계정의 저장된 비밀번호가 초기화됩니다. 비밀번호를 기억하고 계신지 확인하세요."
+          "warning": "현재 로그인된 MS 계정의 저장된 비밀번호가 초기화됩니다. 비밀번호를 기억하고 계신지 확인하세요. 재부팅이 필요합니다."
         },
         {
           "id": "ms_login_0x_error",
           "title": "MS 로그인 시 0x80070002 같은 오류 코드가 나와요",
           "explain": "Windows 인증 캐시가 손상되었습니다. 위와 동일한 방법으로 캐시를 정리하면 해결됩니다.",
           "tool_id": "ms_account_cleanup",
-          "tags": ["no_reboot", "15sec"]
+          "tags": ["reboot", "15sec"]
         },
         {
           "id": "outlook_other_account",
           "title": "Outlook/Teams에 이전 직원 계정이 떠요",
           "explain": "자격 증명 관리자에 이전 직원의 계정이 남아있습니다. 해당 계정 정보를 정리하면 해결됩니다.",
           "tool_id": "ms_account_cleanup",
-          "tags": ["no_reboot", "15sec"]
+          "tags": ["reboot", "15sec"]
         }
       ]
     },

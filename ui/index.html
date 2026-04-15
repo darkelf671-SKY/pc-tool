@@ -398,6 +398,7 @@ let currentSymptom = null;
 let execSteps = [];
 let execCompletedSteps = 0;
 let tagLabels = {};
+let isExecuting = false;  // 도구 중복 실행 방지
 
 // -- 아이콘/색상 매핑 (목업 동일) --
 const ICON_MAP = {
@@ -577,6 +578,7 @@ function showDetail(catId) {
 
 /* ====== RUN CLICK ====== */
 function onRunClick(symptomId) {
+  if (isExecuting) return;  // 실행 중 중복 클릭 방지
   const sym = findSymptom(symptomId);
   if (!sym) return;
   currentSymptom = sym;
@@ -640,6 +642,8 @@ function confirmExec() {
 
 /* ====== EXEC ====== */
 async function startExec(sym) {
+  if (isExecuting) return;
+  isExecuting = true;
   currentSymptom = sym;
   execCompletedSteps = 0;
 
@@ -717,6 +721,7 @@ function onToolLog(message, stepIndex) {
 }
 
 function onToolComplete(success, duration, requiresReboot) {
+  isExecuting = false;  // 실행 완료 → 다시 실행 가능
   // Fill progress to 100%
   document.getElementById('exec-bar').style.width = '100%';
 
