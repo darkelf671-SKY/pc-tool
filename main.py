@@ -11,12 +11,16 @@ def _fix_tcl_path():
     """PyInstaller frozen 환경에서 Tcl/Tk 경로 설정"""
     if getattr(sys, "frozen", False):
         base = sys._MEIPASS
-        tcl = os.path.join(base, "tcl8.6")
-        tk = os.path.join(base, "tk8.6")
-        if os.path.isdir(tcl):
-            os.environ["TCL_LIBRARY"] = tcl
-        if os.path.isdir(tk):
-            os.environ["TK_LIBRARY"] = tk
+        for name in ("_tcl_data", "tcl8.6"):
+            path = os.path.join(base, name)
+            if os.path.isdir(path):
+                os.environ["TCL_LIBRARY"] = path
+                break
+        for name in ("_tk_data", "tk8.6"):
+            path = os.path.join(base, name)
+            if os.path.isdir(path):
+                os.environ["TK_LIBRARY"] = path
+                break
 
 
 def set_dpi_awareness():

@@ -18,8 +18,8 @@ PyInstaller.__main__.run([
     "--add-data", f"{os.path.join(BASE_DIR, 'data', 'symptom_map.json')};data",
     "--add-data", f"{os.path.join(BASE_DIR, 'ui', 'index.html')};ui",
     # Tcl/Tk 데이터 (PyInstaller 번들링 누락 방지)
-    "--add-data", f"{TCL_DIR};tcl8.6",
-    "--add-data", f"{TK_DIR};tk8.6",
+    "--add-data", f"{TCL_DIR};_tcl_data",
+    "--add-data", f"{TK_DIR};_tk_data",
     # 모든 도구 모듈
     "--hidden-import", "tools.printer_spooler",
     "--hidden-import", "tools.winupdate_cache",
